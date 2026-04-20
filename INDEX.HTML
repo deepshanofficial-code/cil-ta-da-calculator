@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CIL TA/DA Calculator</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
+
+<style>
+
+:root {
+  --bg: #f5f5f7;
+  --card: rgba(255,255,255,0.7);
+  --text: #1d1d1f;
+  --sub: #6e6e73;
+  --accent: #0071e3;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 40px 15px;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+}
+
+h1 {
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.card {
+  backdrop-filter: blur(20px);
+  background: var(--card);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+label {
+  font-size: 13px;
+  color: var(--sub);
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  background: white;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.secondary {
+  background: #e5e5ea;
+  color: black;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+  line-height: 1.6;
+}
+
+.loader {
+  text-align: center;
+  font-size: 14px;
+  color: var(--sub);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>TA/DA Calculator</h1>
+
+<div class="card">
+
+<label>City</label>
+<input type="text" id="city" placeholder="e.g. Jharsuguda">
+
+<label>Stay Type</label>
+<select id="stay">
+  <option value="hotel">Hotel</option>
+  <option value="own">Own Arrangement</option>
+  <option value="guest">Treated as Guest</option>
+</select>
+
+<label>Upload Ticket</label>
+<input type="file" id="ticket">
+
+<button class="secondary" onclick="scanTicket()">Scan Ticket</button>
+
+<label>Departure</label>
+<input type="datetime-local" id="start">
+
+<label>Arrival</label>
+<input type="datetime-local" id="end">
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="loader" id="loading"></div>
+<div class="result" id="output"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// SPECIFIED CITIES (extend anytime)
+const specifiedCities = [
+  "delhi","new delhi","mumbai","kolkata","chennai","bangalore","hyderabad",
+  "bhubaneswar","nagpur","ranchi","bilaspur","asansol","dhanbad","durgapur"
+];
+
+// LOCATION DETECTION
+function getLocationType(city) {
+  city = city.toLowerCase().trim();
+  return specifiedCities.includes(city) ? "Specified" : "Other";
+}
+
+// DA RATE
+function getDARate(location, stay) {
+  if (location === "Specified") {
+    if (stay === "hotel") return 3700;
+    if (stay === "own") return 3200;
+    if (stay === "guest") return 3700 * 0.5;
+  } else {
+    if (stay === "hotel") return 3400;
+    if (stay === "own") return 3000;
+    if (stay === "guest") return 3400 * 0.5;
+  }
+}
+
+// DAY LOGIC
+function calculateDays(start, end) {
+  let diff = (end - start) / (1000 * 60 * 60);
+  let full = Math.floor(diff / 24);
+  let rem = diff % 24;
+
+  if (rem > 12) return full + 1;
+  if (rem > 6) return full + 0.5;
+  return full;
+}
+
+// OCR
+function scanTicket() {
+  let file = document.getElementById("ticket").files[0];
+  if (!file) return alert("Upload ticket first");
+
+  document.getElementById("loading").innerText = "Scanning ticket...";
+
+  Tesseract.recognize(file, 'eng')
+    .then(({ data: { text } }) => {
+
+      let dateMatch = text.match(/\d{2}[\/-]\d{2}[\/-]\d{4}/g);
+      let timeMatch = text.match(/\d{2}:\d{2}/g);
+
+      if (dateMatch && timeMatch) {
+
+        let start = formatDate(dateMatch[0], timeMatch[0]);
+        let end = formatDate(dateMatch[1] || dateMatch[0], timeMatch[1] || timeMatch[0]);
+
+        document.getElementById("start").value = start;
+        document.getElementById("end").value = end;
+
+        document.getElementById("loading").innerText = "Dates detected ✔";
+      } else {
+        document.getElementById("loading").innerText = "Could not detect properly";
+      }
+    });
+}
+
+// FORMAT
+function formatDate(date, time) {
+  let [d, m, y] = date.split(/\/|-/);
+  return `${y}-${m}-${d}T${time}`;
+}
+
+// MAIN CALC
+function calculate() {
+
+  let city = document.getElementById("city").value;
+  let stay = document.getElementById("stay").value;
+  let start = new Date(document.getElementById("start").value);
+  let end = new Date(document.getElementById("end").value);
+
+  if (!city || !start || !end) {
+    alert("Fill all details");
+    return;
+  }
+
+  let location = getLocationType(city);
+  let days = calculateDays(start, end);
+  let rate = getDARate(location, stay);
+  let total = days * rate;
+
+  document.getElementById("output").innerHTML = `
+    <b>Location Type:</b> ${location} <br>
+    <b>DA Days:</b> ${days} <br>
+    <b>Rate:</b> ₹${rate} <br><br>
+    <b>Total DA:</b> ₹${total}
+  `;
+}
+
+</script>
+
+</body>
+</html>
