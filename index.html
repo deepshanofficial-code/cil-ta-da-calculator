@@ -3,129 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>CIL TA/DA System</title>
+<title>CIL TA/DA Platform</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+
+/* GLOBAL */
 body {
-  margin:0;
-  font-family:-apple-system, BlinkMacSystemFont;
-  background: linear-gradient(180deg,#000,#111);
-  color:white;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #eef2ff, #fdf2ff, #ecfeff);
+  color: #111;
 }
 
-.container {
-  max-width:540px;
-  margin:auto;
-  padding:20px;
+.wrapper {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px 20px;
 }
 
+/* HEADER */
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.header p {
+  color: #666;
+  font-size: 14px;
+}
+
+/* CARD */
 .card {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(25px);
-  padding:20px;
-  border-radius:20px;
-  margin-bottom:20px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(15px);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
-h2 { text-align:center; }
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
 
-input, select, button {
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-  border-radius:12px;
-  border:none;
-  background:rgba(255,255,255,0.08);
-  color:white;
+.full {
+  grid-column: span 2;
+}
+
+/* INPUT */
+label {
+  font-size: 12px;
+  color: #555;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+/* BUTTONS */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 button {
-  background: linear-gradient(135deg,#0071e3,#00c6ff);
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.result {
-  background:rgba(255,255,255,0.08);
-  padding:15px;
-  border-radius:12px;
-  white-space:pre-line;
+.primary {
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: white;
 }
+
+.secondary {
+  background: #eee;
+}
+
+/* RESULT */
+.result {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  white-space: pre-line;
+  font-size: 14px;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="wrapper">
 
-<h2>TA/DA Claim Engine</h2>
+<div class="header">
+<h1>TA/DA Claim System</h1>
+<p>Coal India Limited — Smart Claim Engine</p>
+</div>
 
+<!-- EMPLOYEE -->
 <div class="card">
+<h3>Employee Details</h3>
 
-<label>Employee Category</label>
+<div class="grid">
+<div>
+<label>Grade</label>
 <select id="grade">
-<option value="board">Board Level</option>
+<option value="board">Board</option>
 <option value="e9">E9</option>
 <option value="e78">E7–E8</option>
 <option value="e46">E4–E6</option>
 <option value="e13">E1–E3</option>
-<option value="non_high">Non-Exec (High)</option>
-<option value="non_low">Non-Exec (Low)</option>
+<option value="non_high">Non Exec High</option>
+<option value="non_low">Non Exec Low</option>
 </select>
+</div>
 
+<div>
 <label>City</label>
 <input id="city">
+</div>
 
+<div>
 <label>Stay Type</label>
 <select id="stay">
 <option value="hotel">Hotel</option>
-<option value="own">Own Arrangement</option>
+<option value="own">Own</option>
 <option value="guest">Guest</option>
 </select>
-
-<label>Departure</label>
-<input type="datetime-local" id="start">
-
-<label>Arrival</label>
-<input type="datetime-local" id="end">
-
 </div>
 
-<div class="card">
+<div>
+<label>Location Type</label>
+<input id="locDisplay" disabled>
+</div>
 
+<div>
+<label>Departure</label>
+<input type="datetime-local" id="start">
+</div>
+
+<div>
+<label>Arrival</label>
+<input type="datetime-local" id="end">
+</div>
+
+</div>
+</div>
+
+<!-- RECEIPTS -->
+<div class="card">
 <h3>Upload Receipts</h3>
 
+<div class="grid">
 <input type="file" id="trainFile">
 <input type="file" id="cabFile">
 <input type="file" id="hotelFile">
+</div>
 
-<button onclick="scan()">Scan Receipts</button>
+<button class="secondary" onclick="scan()">Scan Receipts</button>
+</div>
 
-<label>Train (₹)</label>
-<input id="train" type="number">
+<!-- EXPENSES -->
+<div class="card">
+<h3>Expenses</h3>
 
-<label>Cab (₹ or km)</label>
-<input id="cab" type="number">
+<div class="grid">
+<input type="number" id="train" placeholder="Train ₹">
+<input type="number" id="cab" placeholder="Cab ₹ / KM">
 
 <select id="mode">
-<option value="amt">Direct</option>
+<option value="amt">Direct Amount</option>
 <option value="km">Per KM</option>
 </select>
 
-<label>Hotel (₹)</label>
-<input id="hotel" type="number">
-
+<input type="number" id="hotel" placeholder="Hotel ₹">
+</div>
 </div>
 
+<!-- ACTION -->
 <div class="card">
-
-<button onclick="calculate()">Calculate</button>
-<button onclick="pdf()">Download PDF</button>
+<div class="actions">
+<button class="primary" onclick="calculate()">Calculate</button>
+<button class="secondary" onclick="pdf()">PDF</button>
+</div>
 
 <div class="result" id="out"></div>
-
 </div>
 
 </div>
@@ -137,9 +221,13 @@ function INR(x){return "₹"+Number(x||0).toLocaleString("en-IN");}
 
 // LOCATION
 const spec=["delhi","mumbai","kolkata","chennai","bangalore","hyderabad"];
-function loc(c){return spec.includes(c.toLowerCase())?"specified":"other";}
+function loc(c){
+ let t = spec.includes((c||"").toLowerCase())?"specified":"other";
+ document.getElementById("locDisplay").value = t;
+ return t;
+}
 
-// DA MATRIX (LOCKED)
+// DA
 const DA={
  board:{specified:3700,other:3400},
  e9:{specified:3200,other:3000},
@@ -149,13 +237,6 @@ const DA={
  non_high:{specified:2200,other:2000},
  non_low:{specified:1200,other:1000}
 };
-
-// STAY RULE
-function stayAdj(base,stay){
- if(stay==="guest") return base*0.5;
- if(stay==="own") return base*0.75;
- return base;
-}
 
 // DAYS
 function days(s,e){
@@ -201,14 +282,15 @@ function calculate(){
  let c=city.value;
  let s=stay.value;
 
- let start=new Date(startInput.value||start.value);
- let end=new Date(endInput.value||end.value);
+ let startDate=new Date(start.value);
+ let endDate=new Date(end.value);
 
  let l=loc(c);
- let d=days(start,end);
+ let d=days(startDate,endDate);
 
  let base=DA[g][l];
- let rate=stayAdj(base,s);
+ let rate = s==="guest"?base*0.5 : s==="own"?base*0.75 : base;
+
  let da=rate*d;
 
  let trainAmt=Number(train.value||0);
@@ -216,13 +298,13 @@ function calculate(){
  let hotelAmt=Number(hotel.value||0);
 
  if(mode.value==="km"){
-   cabAmt=cabAmt*cabRate(g);
+   cabAmt = cabAmt * cabRate(g);
  }
 
  let total=Math.round(da+trainAmt+cabAmt+hotelAmt);
 
  let text=`
---- TA/DA SUMMARY ---
+TA/DA SUMMARY
 
 Grade: ${g}
 Location: ${c} (${l})
@@ -237,12 +319,11 @@ Hotel: ${INR(hotelAmt)}
 
 TOTAL: ${INR(total)}
 
-JUSTIFICATION:
-• Rates applied as per CIL TA Rules (2010 + revisions)
-• Location classification applied
-• Stay adjustment applied (Hotel/Own/Guest)
-• Cab restricted by eligibility slab
-• Train reimbursed as actual
+RULES APPLIED:
+• DA slab based on grade & location
+• Guest stay = 50%
+• Own stay = reduced DA
+• Cab limited by eligibility
 `;
 
  out.innerText=text;
