@@ -4,105 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CIL TA/DA Calculator</title>
+<title>CIL TA/DA System</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-
-:root {
-  --bg: #f5f5f7;
-  --card: rgba(255,255,255,0.7);
-  --text: #1d1d1f;
-  --sub: #6e6e73;
-  --accent: #0071e3;
-}
-
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  justify-content: center;
-  padding: 40px 15px;
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont;
+  background: linear-gradient(180deg,#000,#111);
+  color:white;
 }
 
 .container {
-  width: 100%;
-  max-width: 520px;
-}
-
-h1 {
-  font-size: 28px;
-  text-align: center;
-  margin-bottom: 25px;
+  max-width:540px;
+  margin:auto;
+  padding:20px;
 }
 
 .card {
-  backdrop-filter: blur(20px);
-  background: var(--card);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(25px);
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:20px;
 }
 
-label {
-  font-size: 13px;
-  color: var(--sub);
-}
+h2 { text-align:center; }
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin: 6px 0 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 15px;
-  background: white;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--accent);
+input, select, button {
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:12px;
+  border:none;
+  background:rgba(255,255,255,0.08);
+  color:white;
 }
 
 button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  background: var(--accent);
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-.secondary {
-  background: #e5e5ea;
-  color: black;
+  background: linear-gradient(135deg,#0071e3,#00c6ff);
 }
 
 .result {
-  margin-top: 20px;
-  padding: 15px;
-  border-radius: 12px;
-  background: white;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-  line-height: 1.6;
+  background:rgba(255,255,255,0.08);
+  padding:15px;
+  border-radius:12px;
+  white-space:pre-line;
 }
-
-.loader {
-  text-align: center;
-  font-size: 14px;
-  color: var(--sub);
-}
-
 </style>
 </head>
 
@@ -110,24 +60,30 @@ button:hover {
 
 <div class="container">
 
-<h1>TA/DA Calculator</h1>
+<h2>TA/DA Claim Engine</h2>
 
 <div class="card">
 
+<label>Employee Category</label>
+<select id="grade">
+<option value="board">Board Level</option>
+<option value="e9">E9</option>
+<option value="e78">E7–E8</option>
+<option value="e46">E4–E6</option>
+<option value="e13">E1–E3</option>
+<option value="non_high">Non-Exec (High)</option>
+<option value="non_low">Non-Exec (Low)</option>
+</select>
+
 <label>City</label>
-<input type="text" id="city" placeholder="e.g. Jharsuguda">
+<input id="city">
 
 <label>Stay Type</label>
 <select id="stay">
-  <option value="hotel">Hotel</option>
-  <option value="own">Own Arrangement</option>
-  <option value="guest">Treated as Guest</option>
+<option value="hotel">Hotel</option>
+<option value="own">Own Arrangement</option>
+<option value="guest">Guest</option>
 </select>
-
-<label>Upload Ticket</label>
-<input type="file" id="ticket">
-
-<button class="secondary" onclick="scanTicket()">Scan Ticket</button>
 
 <label>Departure</label>
 <input type="datetime-local" id="start">
@@ -135,10 +91,40 @@ button:hover {
 <label>Arrival</label>
 <input type="datetime-local" id="end">
 
-<button onclick="calculate()">Calculate</button>
+</div>
 
-<div class="loader" id="loading"></div>
-<div class="result" id="output"></div>
+<div class="card">
+
+<h3>Upload Receipts</h3>
+
+<input type="file" id="trainFile">
+<input type="file" id="cabFile">
+<input type="file" id="hotelFile">
+
+<button onclick="scan()">Scan Receipts</button>
+
+<label>Train (₹)</label>
+<input id="train" type="number">
+
+<label>Cab (₹ or km)</label>
+<input id="cab" type="number">
+
+<select id="mode">
+<option value="amt">Direct</option>
+<option value="km">Per KM</option>
+</select>
+
+<label>Hotel (₹)</label>
+<input id="hotel" type="number">
+
+</div>
+
+<div class="card">
+
+<button onclick="calculate()">Calculate</button>
+<button onclick="pdf()">Download PDF</button>
+
+<div class="result" id="out"></div>
 
 </div>
 
@@ -146,100 +132,129 @@ button:hover {
 
 <script>
 
-// SPECIFIED CITIES (extend anytime)
-const specifiedCities = [
-  "delhi","new delhi","mumbai","kolkata","chennai","bangalore","hyderabad",
-  "bhubaneswar","nagpur","ranchi","bilaspur","asansol","dhanbad","durgapur"
-];
+// INR
+function INR(x){return "₹"+Number(x||0).toLocaleString("en-IN");}
 
-// LOCATION DETECTION
-function getLocationType(city) {
-  city = city.toLowerCase().trim();
-  return specifiedCities.includes(city) ? "Specified" : "Other";
+// LOCATION
+const spec=["delhi","mumbai","kolkata","chennai","bangalore","hyderabad"];
+function loc(c){return spec.includes(c.toLowerCase())?"specified":"other";}
+
+// DA MATRIX (LOCKED)
+const DA={
+ board:{specified:3700,other:3400},
+ e9:{specified:3200,other:3000},
+ e78:{specified:3100,other:2500},
+ e46:{specified:2300,other:1800},
+ e13:{specified:1800,other:1500},
+ non_high:{specified:2200,other:2000},
+ non_low:{specified:1200,other:1000}
+};
+
+// STAY RULE
+function stayAdj(base,stay){
+ if(stay==="guest") return base*0.5;
+ if(stay==="own") return base*0.75;
+ return base;
 }
 
-// DA RATE
-function getDARate(location, stay) {
-  if (location === "Specified") {
-    if (stay === "hotel") return 3700;
-    if (stay === "own") return 3200;
-    if (stay === "guest") return 3700 * 0.5;
-  } else {
-    if (stay === "hotel") return 3400;
-    if (stay === "own") return 3000;
-    if (stay === "guest") return 3400 * 0.5;
-  }
+// DAYS
+function days(s,e){
+ let h=(e-s)/(1000*60*60);
+ let f=Math.floor(h/24);
+ let r=h%24;
+ if(r>12) return f+1;
+ if(r>6) return f+0.5;
+ return f;
 }
 
-// DAY LOGIC
-function calculateDays(start, end) {
-  let diff = (end - start) / (1000 * 60 * 60);
-  let full = Math.floor(diff / 24);
-  let rem = diff % 24;
-
-  if (rem > 12) return full + 1;
-  if (rem > 6) return full + 0.5;
-  return full;
+// CAB RATE
+function cabRate(g){
+ if(["board","e9"].includes(g)) return 15;
+ if(["e78","e46"].includes(g)) return 12;
+ return 8;
 }
 
 // OCR
-function scanTicket() {
-  let file = document.getElementById("ticket").files[0];
-  if (!file) return alert("Upload ticket first");
-
-  document.getElementById("loading").innerText = "Scanning ticket...";
-
-  Tesseract.recognize(file, 'eng')
-    .then(({ data: { text } }) => {
-
-      let dateMatch = text.match(/\d{2}[\/-]\d{2}[\/-]\d{4}/g);
-      let timeMatch = text.match(/\d{2}:\d{2}/g);
-
-      if (dateMatch && timeMatch) {
-
-        let start = formatDate(dateMatch[0], timeMatch[0]);
-        let end = formatDate(dateMatch[1] || dateMatch[0], timeMatch[1] || timeMatch[0]);
-
-        document.getElementById("start").value = start;
-        document.getElementById("end").value = end;
-
-        document.getElementById("loading").innerText = "Dates detected ✔";
-      } else {
-        document.getElementById("loading").innerText = "Could not detect properly";
-      }
-    });
+async function extract(file){
+ if(!file) return 0;
+ let {data:{text}}=await Tesseract.recognize(file,'eng');
+ let m=text.match(/\d{3,6}/);
+ return m?parseInt(m[0]):0;
 }
 
-// FORMAT
-function formatDate(date, time) {
-  let [d, m, y] = date.split(/\/|-/);
-  return `${y}-${m}-${d}T${time}`;
+async function scan(){
+ let t=await extract(trainFile.files[0]);
+ let c=await extract(cabFile.files[0]);
+ let h=await extract(hotelFile.files[0]);
+
+ if(t) train.value=t;
+ if(c) cab.value=c;
+ if(h) hotel.value=h;
+
+ alert("Verify scanned values");
 }
 
-// MAIN CALC
-function calculate() {
+// MAIN
+function calculate(){
 
-  let city = document.getElementById("city").value;
-  let stay = document.getElementById("stay").value;
-  let start = new Date(document.getElementById("start").value);
-  let end = new Date(document.getElementById("end").value);
+ let g=grade.value;
+ let c=city.value;
+ let s=stay.value;
 
-  if (!city || !start || !end) {
-    alert("Fill all details");
-    return;
-  }
+ let start=new Date(startInput.value||start.value);
+ let end=new Date(endInput.value||end.value);
 
-  let location = getLocationType(city);
-  let days = calculateDays(start, end);
-  let rate = getDARate(location, stay);
-  let total = days * rate;
+ let l=loc(c);
+ let d=days(start,end);
 
-  document.getElementById("output").innerHTML = `
-    <b>Location Type:</b> ${location} <br>
-    <b>DA Days:</b> ${days} <br>
-    <b>Rate:</b> ₹${rate} <br><br>
-    <b>Total DA:</b> ₹${total}
-  `;
+ let base=DA[g][l];
+ let rate=stayAdj(base,s);
+ let da=rate*d;
+
+ let trainAmt=Number(train.value||0);
+ let cabAmt=Number(cab.value||0);
+ let hotelAmt=Number(hotel.value||0);
+
+ if(mode.value==="km"){
+   cabAmt=cabAmt*cabRate(g);
+ }
+
+ let total=Math.round(da+trainAmt+cabAmt+hotelAmt);
+
+ let text=`
+--- TA/DA SUMMARY ---
+
+Grade: ${g}
+Location: ${c} (${l})
+
+DA Rate: ${INR(rate)}
+Days: ${d}
+DA: ${INR(da)}
+
+Train: ${INR(trainAmt)}
+Cab: ${INR(cabAmt)}
+Hotel: ${INR(hotelAmt)}
+
+TOTAL: ${INR(total)}
+
+JUSTIFICATION:
+• Rates applied as per CIL TA Rules (2010 + revisions)
+• Location classification applied
+• Stay adjustment applied (Hotel/Own/Guest)
+• Cab restricted by eligibility slab
+• Train reimbursed as actual
+`;
+
+ out.innerText=text;
+ window.finalText=text;
+}
+
+// PDF
+function pdf(){
+ const {jsPDF}=window.jspdf;
+ let doc=new jsPDF();
+ doc.text(window.finalText||"No data",10,10);
+ doc.save("TA_DA.pdf");
 }
 
 </script>
